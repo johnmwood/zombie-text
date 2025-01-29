@@ -17,7 +17,7 @@ func main() {
 	pwd, _ := os.Getwd()
 	fmt.Printf("pwd: %s\n", pwd)
 
-	cfg, err := config.LoadConfig(secretPath)
+	cfg, err := config.LoadConfig(configPath, secretPath)
 	if err != nil {
 		panic(err)
 	}
@@ -25,5 +25,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%v", analyzer)
+
+	err = analyzer.ReadImage()
+	fmt.Println(err)
 }
