@@ -12,20 +12,24 @@ import (
 	anthropic "github.com/liushuangls/go-anthropic/v2"
 )
 
-const testImage = "crossfit_00.PNG"
-
 type AnthropicAnalyzer struct {
-	Client   anthropic.Client
-	ImageDir string
+	Client     anthropic.Client
+	ImageDir   string
+	basePrompt *string
 
 	model anthropic.Model
 }
 
 func NewAnthropicAnalyzer(cfg *config.Config) (*AnthropicAnalyzer, error) {
+	prompt, err := gatherPrompt(cfg.BasePrompt)
+	if err != nil {
+		fmt.Println("failed to find prompt file at %s", cfg.BasePrompt)
+	}
 	analyzer := &AnthropicAnalyzer{
-		Client:   *anthropic.NewClient(cfg.ClaudeAPIKey),
-		ImageDir: cfg.ImageDir,
-		model:    anthropic.ModelClaude3Opus20240229,
+		Client:     *anthropic.NewClient(cfg.ClaudeAPIKey),
+		ImageDir:   cfg.ImageDir,
+		model:      anthropic.ModelClaude3Opus20240229,
+		basePrompt: &prompt,
 	}
 	if cfg.ClaudeAPIKey == "" {
 		return nil, fmt.Errorf("missing claude api key")
@@ -34,8 +38,8 @@ func NewAnthropicAnalyzer(cfg *config.Config) (*AnthropicAnalyzer, error) {
 	return analyzer, nil
 }
 
-func (aa *AnthropicAnalyzer) ReadImage() error {
-	image, err := os.Open(fmt.Sprintf("%s/%s", aa.ImageDir, testImage))
+func (aa *AnthropicAnalyzer) ReadImage(imageName string) error {
+	image, err := os.Open(fmt.Sprintf("%s/%s", aa.ImageDir, imageName))
 	if err != nil {
 		return err
 	}
@@ -48,6 +52,12 @@ func (aa *AnthropicAnalyzer) ReadImage() error {
 
 	resp, err := aa.Client.CreateMessages(context.Background(), anthropic.MessagesRequest{
 		Model: aa.model,
+		MultiSystem: []anthropic.MessageSystemPart{
+			{
+				Type: "text",
+				Text: *aa.basePrompt,
+			},
+		},
 		Messages: []anthropic.Message{
 			{
 				Role: anthropic.RoleUser,
@@ -74,4 +84,12 @@ func (aa *AnthropicAnalyzer) ReadImage() error {
 	fmt.Println(resp.Content[0].GetText())
 
 	return nil
+}
+
+func gatherPrompt(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }

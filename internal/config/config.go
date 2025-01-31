@@ -8,6 +8,7 @@ import (
 type Config struct {
 	ClaudeAPIKey string `json:"claude_api_key"`
 	ImageDir     string `json:"image_dir"`
+	BasePrompt   string `json:"base_prompt"`
 }
 
 func LoadConfig(paths ...string) (*Config, error) {

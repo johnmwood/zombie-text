@@ -1,3 +1,4 @@
 {
-  "image_dir": "./samples"
+  "image_dir": "./samples",
+  "base_prompt": "./prompts/base.txt"
 }

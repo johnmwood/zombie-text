@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/johnmwood/zombie-text/internal/analyzer/claude"
 	"github.com/johnmwood/zombie-text/internal/config"
@@ -26,6 +27,21 @@ func main() {
 		panic(err)
 	}
 
-	err = analyzer.ReadImage()
-	fmt.Println(err)
+	dir, err := os.ReadDir(analyzer.ImageDir)
+	if err != nil {
+		fmt.Printf("failed to read dir with err: %v", err)
+	}
+
+	for _, entry := range dir {
+		name := entry.Name()
+		fmt.Println("processing file: ", name)
+		if !strings.HasSuffix(strings.ToLower(name), "png") {
+			continue
+		}
+		err := analyzer.ReadImage(name)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
 }
